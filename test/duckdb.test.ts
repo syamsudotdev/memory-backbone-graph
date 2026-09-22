@@ -40,13 +40,13 @@ test("pinned platform mapping is exhaustive", async () => {
 
 test("configured candidate wins and permits offline startup", async () => {
   const root = await extension(), configured = join(root, "configured"), pathDir = join(root, "path"); await mkdir(pathDir); await executable(configured, "1.5.5"); await executable(join(pathDir, "duckdb"), "1.5.5");
-  let downloads = 0; const selected = await ensureDuckDB({ extensionDir: root, platform: "linux", arch: "x64", env: { ...process.env, PATH: pathDir, PI_KNOWLEDGE_DUCKDB_PATH: configured }, download: async () => { downloads++; throw new Error("offline"); } });
+  let downloads = 0; const selected = await ensureDuckDB({ extensionDir: root, platform: "linux", arch: "x64", env: { ...process.env, PATH: pathDir, MBG_DUCKDB_PATH: configured }, download: async () => { downloads++; throw new Error("offline"); } });
   assert.equal(selected, configured); assert.equal(downloads, 0);
 });
 
 test("offline mode fails before download when no compatible executable exists", async () => {
   const root = await extension(); let downloads = 0;
-  await assert.rejects(ensureDuckDB({ extensionDir: root, platform: "linux", arch: "x64", env: { ...process.env, PATH: "", PI_OFFLINE: "1" }, download: async () => { downloads++; return Buffer.alloc(0); } }), /not available offline/);
+  await assert.rejects(ensureDuckDB({ extensionDir: root, platform: "linux", arch: "x64", env: { ...process.env, PATH: "", MBG_OFFLINE: "1" }, download: async () => { downloads++; return Buffer.alloc(0); } }), /not available offline/);
   assert.equal(downloads, 0);
 });
 
@@ -58,13 +58,13 @@ test("incompatible PATH falls through to compatible managed executable", async (
 
 test("verified fixture installs atomically and cleans archive", async () => {
   const archive = zip([{ name: "duckdb", data: Buffer.from("#!/bin/sh\nprintf 'v1.5.5 (Variegata) 0123456789\\n'\n") }]), root = await extension(archive);
-  const selected = await ensureDuckDB({ extensionDir: root, platform: "linux", arch: "x64", env: { ...process.env, PATH: "", PI_OFFLINE: "" }, download: async () => archive });
+  const selected = await ensureDuckDB({ extensionDir: root, platform: "linux", arch: "x64", env: { ...process.env, PATH: "", MBG_OFFLINE: "" }, download: async () => archive });
   assert.equal((await stat(selected)).mode & 0o777, 0o755); assert.deepEqual(await readdir(join(root, "runtime/duckdb/1.5.5/linux-x64")), ["duckdb"]);
 });
 
 test("checksum failure installs nothing and cleans temporary data", async () => {
   const archive = zip([{ name: "duckdb", data: Buffer.from("bad") }]), root = await extension(archive, "0".repeat(64));
-  await assert.rejects(ensureDuckDB({ extensionDir: root, platform: "linux", arch: "x64", env: { ...process.env, PATH: "", PI_OFFLINE: "" }, download: async () => archive }), /checksum mismatch/);
+  await assert.rejects(ensureDuckDB({ extensionDir: root, platform: "linux", arch: "x64", env: { ...process.env, PATH: "", MBG_OFFLINE: "" }, download: async () => archive }), /checksum mismatch/);
   assert.deepEqual(await readdir(join(root, "runtime/duckdb/1.5.5/linux-x64")), []);
 });
 
@@ -109,12 +109,12 @@ test("recursive runtime creation syncs each new parent entry in order", async ()
 test("candidate precedence is configured, PATH, then managed", async () => {
   const root = await extension(), configured = join(root, "configured"), pathDir = join(root, "path"), pathCandidate = join(pathDir, "duckdb"), managed = join(root, "runtime/duckdb/1.5.5/linux-x64/duckdb");
   await mkdir(pathDir); await mkdir(join(root, "runtime/duckdb/1.5.5/linux-x64"), { recursive: true }); await executable(configured, "0.9.0"); await executable(pathCandidate, "1.5.5"); await executable(managed, "1.5.5");
-  assert.equal(await ensureDuckDB({ extensionDir: root, platform: "linux", arch: "x64", env: { ...process.env, PATH: pathDir, PI_KNOWLEDGE_DUCKDB_PATH: configured } }), "duckdb");
+  assert.equal(await ensureDuckDB({ extensionDir: root, platform: "linux", arch: "x64", env: { ...process.env, PATH: pathDir, MBG_DUCKDB_PATH: configured } }), "duckdb");
 });
 
 test("unsupported platform is rejected before discovery", async () => {
   const root = await extension(), configured = join(root, "configured"); await executable(configured, "1.5.5");
-  await assert.rejects(ensureDuckDB({ extensionDir: root, platform: "aix", arch: "ppc64", env: { ...process.env, PI_KNOWLEDGE_DUCKDB_PATH: configured } }), /unsupported DuckDB platform/);
+  await assert.rejects(ensureDuckDB({ extensionDir: root, platform: "aix", arch: "ppc64", env: { ...process.env, MBG_DUCKDB_PATH: configured } }), /unsupported DuckDB platform/);
 });
 
 test("HTTPS downloader rejects redirect downgrade", async () => {

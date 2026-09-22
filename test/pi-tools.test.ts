@@ -38,7 +38,7 @@ async function snapshot(root: string) {
   return Promise.all(files.map(async path => [path.slice(root.length + 1), (await readFile(path)).toString("base64")]));
 }
 
-process.env.PI_KNOWLEDGE_DUCKDB_PATH = duckdb;
+process.env.MBG_DUCKDB_PATH = duckdb;
 
 test("registers exactly three strict schema-bound tools", () => {
   const registered = tools();
@@ -108,8 +108,8 @@ test("real malformed DuckDB output is a dependency error and preserves append sa
   const fake = join(root, "fake-duckdb");
   await writeFile(fake, "#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then echo 'v1.5.5 (Variegata) d8cdaa33fd'; else echo '{bad json'; fi\n");
   await chmod(fake, 0o755);
-  const previous = process.env.PI_KNOWLEDGE_DUCKDB_PATH; process.env.PI_KNOWLEDGE_DUCKDB_PATH = fake;
-  t.after(() => { if (previous === undefined) delete process.env.PI_KNOWLEDGE_DUCKDB_PATH; else process.env.PI_KNOWLEDGE_DUCKDB_PATH = previous; });
+  const previous = process.env.MBG_DUCKDB_PATH; process.env.MBG_DUCKDB_PATH = fake;
+  t.after(() => { if (previous === undefined) delete process.env.MBG_DUCKDB_PATH; else process.env.MBG_DUCKDB_PATH = previous; });
   const result = details(await tools().get("knowledge_search").execute("bad-db", {}, undefined, undefined, { cwd: root }));
   assert.equal(result.ok, false); assert.equal(result.error.category, "dependency"); assert.equal(result.error.appendCanContinue, true); assert.equal(result.error.canonicalDataPreserved, true);
 });

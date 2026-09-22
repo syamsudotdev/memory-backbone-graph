@@ -45,7 +45,7 @@ test("validation, global duplicates, invalid supersession, and injected replacem
   const dir = await root(), options = { agentId: "writer@host", now: new Date("2026-09-21T00:00:00Z") };
   const first = await appendKnowledge(dir, request(), options), paths = first.changedPaths.map(p => join(dir, p)), before = await Promise.all(paths.map(bytes));
   await assert.rejects(appendKnowledge(dir, { ...request(), facts: [request().facts[0], { subject: "x:y", predicate: "new", object: "z:q" }] }, options), /duplicate/);
-  await assert.rejects(appendKnowledge(dir, request("changed"), { ...options, env: { PI_KNOWLEDGE_SHARD_ROW_LIMIT: "0" } }), /SHARD_ROW_LIMIT/);
+  await assert.rejects(appendKnowledge(dir, request("changed"), { ...options, env: { MBG_SHARD_ROW_LIMIT: "0" } }), /SHARD_ROW_LIMIT/);
   await assert.rejects(appendKnowledge(dir, { ...request("changed"), facts: [{ ...request("changed").facts[0], supersedes: first.factIds[0] }] }, options), /same subject and predicate/);
   assert.deepEqual(await Promise.all(paths.map(bytes)), before);
   for (const index of [0, 1, 2]) { const faultRequest = { ...request(`fault-${index}`), facts: [{ subject: `project:fault-${index}`, predicate: `fault-${index}`, object: `value:fault-${index}` }] }; await assert.rejects(appendKnowledge(dir, faultRequest, { ...options, fault: (phase, i) => { if (phase === "replaced" && i === index) throw new Error("fault"); } }), /fault/); assert.deepEqual(await Promise.all(paths.map(bytes)), before); }
@@ -70,7 +70,7 @@ test("a hard exit during rollback leaves backups reusable by another recovery", 
 });
 
 test("missing or stale state reconstructs shards and deterministic rotation keeps a large operation together", async () => {
-  const dir = await root(), base = { agentId: "writer@host", now: new Date("2026-09-21T00:00:00Z"), env: { PI_KNOWLEDGE_SHARD_ROW_LIMIT: "1" } };
+  const dir = await root(), base = { agentId: "writer@host", now: new Date("2026-09-21T00:00:00Z"), env: { MBG_SHARD_ROW_LIMIT: "1" } };
   await appendKnowledge(dir, request("one"), base); await rm(join(dir, "runtime/active-shards.json"), { force: true });
   await appendKnowledge(dir, request("two"), base); assert.equal((await all(dir, "facts", "0002")).length, 1);
   const result = await appendKnowledge(dir, { ...request("three"), facts: [request("three").facts[0], request("four").facts[0]] }, base);

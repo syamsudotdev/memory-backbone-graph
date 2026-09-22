@@ -133,9 +133,9 @@ An append creates a local knowledge-only commit on the current branch. It does n
 
 | Variable | Purpose |
 | --- | --- |
-| `PI_KNOWLEDGE_DUCKDB_PATH` | Use a specific compatible DuckDB executable. |
-| `PI_KNOWLEDGE_SHARD_ROW_LIMIT` | Set the maximum rows per shard. The default is `10000`. |
-| `PI_OFFLINE=1` | Disable DuckDB downloads. |
+| `MBG_DUCKDB_PATH` | Use a specific compatible DuckDB executable. |
+| `MBG_SHARD_ROW_LIMIT` | Set the maximum rows per shard. The default is `10000`. |
+| `MBG_OFFLINE=1` | Disable DuckDB downloads. |
 
 If no configured, system, or managed DuckDB executable is compatible, the first query downloads and verifies the pinned official artifact. Managed binaries and other runtime files remain ignored by Git.
 
@@ -160,7 +160,7 @@ npm test
 After the managed executable exists, verify offline operation with:
 
 ```sh
-env PI_OFFLINE=1 node --test --test-concurrency=1 test/*.test.ts
+env MBG_OFFLINE=1 node --test --test-concurrency=1 test/*.test.ts
 ```
 
 Tests use temporary Git repositories and do not require administrator access.

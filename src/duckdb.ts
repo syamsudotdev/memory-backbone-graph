@@ -133,9 +133,9 @@ export async function ensureDuckDB(options: BootstrapOptions = {}): Promise<stri
   const metadata = await loadDuckDBMetadata(extensionDir);
   const artifact = selectDuckDBArtifact(metadata, platform, arch);
   const managed = managedPath(extensionDir, metadata.version, platform, arch);
-  const candidates = [env.PI_KNOWLEDGE_DUCKDB_PATH, executableName(platform), managed].filter((value): value is string => !!value);
+  const candidates = [env.MBG_DUCKDB_PATH, executableName(platform), managed].filter((value): value is string => !!value);
   for (const candidate of candidates) if (await compatibleDuckDB(candidate, metadata.version, env)) return candidate;
-  if (/^(?:1|true)$/i.test(env.PI_OFFLINE ?? "")) throw new Error(`knowledge query unavailable: DuckDB ${metadata.version} is not available offline`);
+  if (/^(?:1|true)$/i.test(env.MBG_OFFLINE ?? "")) throw new Error(`knowledge query unavailable: DuckDB ${metadata.version} is not available offline`);
   let archivePath: string | undefined, temporary: string | undefined;
   try {
     const bytes = await (options.download ?? downloadHttps)(artifact.url);
