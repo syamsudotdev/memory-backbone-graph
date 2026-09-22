@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "memory-backbone",
-      "source": ".",
+      "source": "./",
       "description": "Git-backed durable knowledge for coding agents",
       "version": "0.1.0"
     }

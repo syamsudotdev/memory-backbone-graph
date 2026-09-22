@@ -16,7 +16,7 @@ const exec = promisify(execFile);
 async function digest(path: string) { const hash = createHash("sha256"); async function walk(dir: string): Promise<void> { for (const entry of await readdir(dir, { withFileTypes: true }).catch(() => [])) { const child = join(dir, entry.name); if (entry.isDirectory()) await walk(child); else hash.update(child).update(await readFile(child)); } } await walk(path); return hash.digest("hex"); }
 
 async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), "knowledge-query-")); await exec("git", ["init", "-q", "-b", "main", root]); await mkdir(join(root, "knowledge", "metadata"), { recursive: true }); await writeFile(join(root, "knowledge", "metadata", "schema-version"), "1\n");
+  const root = await mkdtemp(join(tmpdir(), "knowledge-query-")); await exec("git", ["init", "-q", "-b", "main", root]);
   const options = { agentId: "tester@host", now: new Date("2025-01-01T00:00:00.000Z") };
   const first = await appendKnowledge(root, { sessionId: "session-1", kind: "decision", summary: "Remote execution choice", source: "test", facts: [{ subject: "topic:remote", predicate: "uses", object: "mode:ssh", evidence: "quoted O'Reilly" }] }, options);
   const second = await appendKnowledge(root, { sessionId: "session-2", kind: "correction", summary: "Remote local correction", source: "review", facts: [{ subject: "topic:remote", predicate: "uses", object: "mode:local", supersedes: first.factIds[0] }] }, { ...options, now: new Date("2025-01-02T00:00:00.000Z") });

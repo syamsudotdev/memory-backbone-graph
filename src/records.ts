@@ -170,4 +170,3 @@ export function shardPath(dataset: Dataset, agentId: string, date: Date, sequenc
   return posix.join("knowledge", dataset, agentId, month, `${String(sequence).padStart(4, "0")}.csv`);
 }
 
-export const SCHEMA_VERSION_PATH = "knowledge/metadata/schema-version";

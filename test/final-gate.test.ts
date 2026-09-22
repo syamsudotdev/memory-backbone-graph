@@ -34,7 +34,7 @@ test("source allowlist and ignored runtime categories exclude generated dependen
   const plugin = JSON.parse(await readFile(join(root, ".claude-plugin/plugin.json"), "utf8"));
   const marketplace = JSON.parse(await readFile(join(root, ".claude-plugin/marketplace.json"), "utf8"));
   const hooks = JSON.parse(await readFile(join(root, "hooks/hooks.json"), "utf8"));
-  assert.equal(plugin.name, "memory-backbone"); assert.equal(marketplace.plugins[0].source, ".");
+  assert.equal(plugin.name, "memory-backbone"); assert.equal(marketplace.plugins[0].source, "./");
   assert.match(hooks.hooks.UserPromptSubmit[0].hooks[0].command, /claude\/prompt-hook\.ts/);
   const deleted = new Set((await exec("git", ["ls-files", "--deleted"], { cwd: root })).stdout.trim().split("\n").filter(Boolean));
   const tracked = (await exec("git", ["ls-files"], { cwd: root })).stdout.trim().split("\n").filter(path => path && !deleted.has(path));

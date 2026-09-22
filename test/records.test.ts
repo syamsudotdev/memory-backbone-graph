@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
-  COLUMNS, SCHEMA_VERSION_PATH, canonicalKey, encodeCsv, factFingerprint, generateId,
+  COLUMNS, canonicalKey, encodeCsv, factFingerprint, generateId,
   isPrefixedUuid, normalizeAgentId, parseCsv, readRecords, shardPath,
 } from "../src/records.ts";
 
@@ -71,7 +71,6 @@ test("canonical keys and canonical paths are deterministic", () => {
   assert.equal(canonicalKey("project", "memory"), "project:memory");
   assert.throws(() => canonicalKey(" project", "memory"), /invalid entity type/);
   assert.equal(shardPath("facts", "sam@mbp-sam", new Date("2026-09-21T23:00:00-02:00"), 2), "knowledge/facts/sam@mbp-sam/2026-09/0002.csv");
-  assert.equal(SCHEMA_VERSION_PATH, "knowledge/metadata/schema-version");
 });
 
 test("entity and episode records validate their dataset-specific fields", () => {

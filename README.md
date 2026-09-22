@@ -112,8 +112,7 @@ Canonical knowledge uses this layout:
 knowledge/
 ├── entities/<agent>/<year-month>/<sequence>.csv
 ├── episodes/<agent>/<year-month>/<sequence>.csv
-├── facts/<agent>/<year-month>/<sequence>.csv
-└── metadata/schema-version
+└── facts/<agent>/<year-month>/<sequence>.csv
 ```
 
 Each agent writes to its own shard. The extension derives the agent identity from the operating-system username and hostname. DuckDB creates temporary query views from the CSV files; database files are not canonical data.
