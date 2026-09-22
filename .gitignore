@@ -5,8 +5,14 @@
 !/.gitignore
 !/README.md
 !/package.json
+!/.claude-plugin/
+!/.claude-plugin/*.json
+!/claude/
+!/claude/**/*.ts
 !/extensions/
 !/extensions/**/*.ts
+!/hooks/
+!/hooks/**/*.json
 !/skills/
 !/skills/**/
 !/skills/**/SKILL.md

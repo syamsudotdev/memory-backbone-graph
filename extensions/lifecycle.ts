@@ -1,6 +1,8 @@
+import { captureGuidance, recallGuidance } from "../src/guidance.ts";
+
 export const knowledgeGuidelines = [
-  "Before making a decision that prior project context can affect, use knowledge_search to recall relevant durable knowledge.",
-  "Before the final response, use knowledge_append for explicit or verified knowledge that will help a future session; do not store temporary progress, speculation, or secrets.",
+  `${recallGuidance} Use knowledge_search for recall.`,
+  `${captureGuidance} Use knowledge_append to record it.`,
 ];
 
 export function addKnowledgeGuidelines(event: { systemPromptOptions: { promptGuidelines: string[] } }) {

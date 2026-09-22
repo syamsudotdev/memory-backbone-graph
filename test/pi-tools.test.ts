@@ -10,8 +10,8 @@ import { promisify } from "node:util";
 import { pathToFileURL } from "node:url";
 import { ensureDuckDB } from "../src/duckdb.ts";
 import { KnowledgeError } from "../src/errors.ts";
-import { addKnowledgeGuidelines, knowledgeGuidelines } from "../src/pi-lifecycle.ts";
-import { registerKnowledgeTools } from "../src/pi-tools.ts";
+import { addKnowledgeGuidelines, knowledgeGuidelines } from "../extensions/lifecycle.ts";
+import { registerKnowledgeTools } from "../extensions/tools.ts";
 
 const exec = promisify(execFile);
 const piEntry = realpathSync((await exec("which", ["pi"])).stdout.trim());
@@ -128,7 +128,7 @@ test("typed domain failures preserve structured categories and append safety", a
 });
 
 test("extension dependency graph contains no model, prompt, network, extraction, or arbitrary-SQL hook", async () => {
-  const sources = await Promise.all(["extensions/knowledge.ts", "src/pi-tools.ts"].map(path => readFile(path, "utf8")));
+  const sources = await Promise.all(["extensions/knowledge.ts", "extensions/tools.ts"].map(path => readFile(path, "utf8")));
   const imports = sources.flatMap(source => [...source.matchAll(/from\s+["']([^"']+)["']/g)].map(match => match[1]));
   assert.deepEqual(imports.filter(path => !path.startsWith(".")), ["@earendil-works/pi-coding-agent", "typebox"]);
   assert.doesNotMatch(sources.join("\n"), /(?:fetch\(|https?:|generateText|complete\(|modelClient|arbitrary.?sql|extract(?:ion)?Hook)/i);

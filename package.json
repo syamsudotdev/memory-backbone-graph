@@ -1,15 +1,19 @@
 {
   "name": "memory-backbone-graph",
   "version": "0.1.0",
-  "description": "Git-backed durable knowledge tools for Pi agents",
+  "description": "Git-backed durable knowledge for Pi and Claude Code agents",
   "type": "module",
   "keywords": [
     "pi-package",
+    "claude-code-plugin",
     "memory",
     "knowledge-graph"
   ],
   "files": [
+    ".claude-plugin",
+    "claude",
     "extensions",
+    "hooks",
     "skills",
     "src",
     "metadata",

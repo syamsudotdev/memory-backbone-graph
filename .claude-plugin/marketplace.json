@@ -1,0 +1,15 @@
+{
+  "name": "memory-backbone",
+  "owner": {
+    "name": "syamsudotdev",
+    "url": "https://github.com/syamsudotdev"
+  },
+  "plugins": [
+    {
+      "name": "memory-backbone",
+      "source": ".",
+      "description": "Git-backed durable knowledge for coding agents",
+      "version": "0.1.0"
+    }
+  ]
+}

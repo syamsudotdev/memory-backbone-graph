@@ -1,8 +1,8 @@
-import type { AppendFact } from "./append.ts";
-import { KnowledgeError } from "./errors.ts";
-import { appendKnowledgeWithGit, resolveProjectGit } from "./git.ts";
-import { getKnowledge, searchKnowledge } from "./query.ts";
-import type { SearchFilters } from "./query.ts";
+import type { AppendFact } from "../src/append.ts";
+import { classifyKnowledgeError, KnowledgeError } from "../src/errors.ts";
+import { appendKnowledgeWithGit, resolveProjectGit } from "../src/git.ts";
+import { getKnowledge, searchKnowledge } from "../src/query.ts";
+import type { SearchFilters } from "../src/query.ts";
 
 type SchemaBuilder = {
   Object(properties: Record<string, unknown>, options?: Record<string, unknown>): unknown;
@@ -17,7 +17,6 @@ type ToolContext = { cwd: string; sessionManager?: { getSessionId(): string } };
 type ToolDefinition = { name: string; label: string; description: string; parameters: unknown; execute(id: string, params: any, signal: AbortSignal | undefined, update: unknown, context: ToolContext): Promise<unknown> };
 type PiApi = { registerTool(definition: ToolDefinition): void };
 
-type DomainError = { category: KnowledgeError["category"]; message: string; canonicalDataPreserved: boolean; appendCanContinue: boolean };
 type Operations = {
   resolveProjectGit: typeof resolveProjectGit;
   appendKnowledgeWithGit: typeof appendKnowledgeWithGit;
@@ -26,17 +25,11 @@ type Operations = {
 };
 const defaultOperations: Operations = { resolveProjectGit, appendKnowledgeWithGit, searchKnowledge, getKnowledge };
 
-function classify(error: unknown): DomainError {
-  const message = error instanceof Error ? error.message : "knowledge operation failed";
-  if (error instanceof KnowledgeError) return { category: error.category, message, canonicalDataPreserved: true, appendCanContinue: error.appendCanContinue };
-  return { category: "unknown", message, canonicalDataPreserved: true, appendCanContinue: false };
-}
-
 function success(operation: string, data: unknown, partial = false) {
   return { content: [{ type: "text", text: JSON.stringify({ ok: true, operation, partial, data }) }], details: { ok: true, operation, partial, data } };
 }
 function failure(operation: string, error: unknown) {
-  const issue = classify(error);
+  const issue = classifyKnowledgeError(error);
   return { content: [{ type: "text", text: JSON.stringify({ ok: false, operation, error: issue }) }], details: { ok: false, operation, error: issue } };
 }
 export function registerKnowledgeTools(pi: PiApi, Type: SchemaBuilder, operations: Operations = defaultOperations) {

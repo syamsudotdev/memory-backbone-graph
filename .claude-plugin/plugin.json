@@ -1,0 +1,5 @@
+{
+  "name": "memory-backbone",
+  "version": "0.1.0",
+  "description": "Git-backed durable knowledge for coding agents"
+}
