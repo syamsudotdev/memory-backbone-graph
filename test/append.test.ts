@@ -27,7 +27,7 @@ test("append creates one episode, facts, missing entities and retry is idempoten
 });
 
 test("retry requires exact episode, agent, session, and fact input metadata", async () => {
-  const dir = await root(), options = { agentId: "writer@host", now: new Date("2026-09-21T00:00:00Z") }, rich = { ...request(), evidence: "episode evidence", tags: "episode-tag", facts: [{ ...request().facts[0], confidence: .5, evidence: "fact evidence", tags: "fact-tag" }] };
+  const dir = await root(), options = { agentId: "writer@host", now: new Date("2026-09-21T00:00:00Z") }, rich = { ...request(), evidence: "episode evidence", tags: "episode-tag", facts: [{ ...request().facts[0], evidence: "fact evidence", tags: "fact-tag" }] };
   await appendKnowledge(dir, rich, options); assert.equal((await appendKnowledge(dir, rich, options)).retry, true);
   for (const changed of [{ ...rich, sessionId: "other" }, { ...rich, summary: "other" }, { ...rich, facts: [{ ...rich.facts[0], evidence: "other" }] }]) await assert.rejects(appendKnowledge(dir, changed, options), /duplicate active triple/);
   await assert.rejects(appendKnowledge(dir, rich, { ...options, agentId: "other@host" }), /duplicate active triple/);
@@ -35,7 +35,7 @@ test("retry requires exact episode, agent, session, and fact input metadata", as
 
 test("runtime types, downstream lock scope, and symlink traversal are enforced", async () => {
   const dir = await root(), options = { agentId: "writer@host", now: new Date("2026-09-21T00:00:00Z") };
-  for (const invalid of [{ ...request(), evidence: 1 }, { ...request(), facts: [{ ...request().facts[0], confidence: "1" }] }, { ...request(), facts: [{ ...request().facts[0], supersedes: 2 }] }]) await assert.rejects(appendKnowledge(dir, invalid as any, options), /invalid|confidence/);
+  for (const invalid of [{ ...request(), evidence: 1 }, { ...request(), facts: [{ ...request().facts[0], supersedes: 2 }] }]) await assert.rejects(appendKnowledge(dir, invalid as any, options), /invalid/);
   let locked = false, preWriteLocked = false; const first = await appendKnowledge(dir, request(), { ...options, preWrite: async () => { preWriteLocked = true; await stat(join(dir, "runtime/knowledge-writer.lock")); }, downstream: async result => { locked = true; assert.equal(result.retry, false); await stat(join(dir, "runtime/knowledge-writer.lock")); } }); assert.equal(locked, true); assert.equal(preWriteLocked, true);
   await appendKnowledge(dir, request(), { ...options, downstream: async result => { assert.equal(result.retry, true); await stat(join(dir, "runtime/knowledge-writer.lock")); } }); assert.equal(first.retry, false);
   const linked = await root(), outside = await root(); await symlink(outside, join(linked, "knowledge")); await assert.rejects(appendKnowledge(linked, request("linked"), options), /symlink traversal rejected/);

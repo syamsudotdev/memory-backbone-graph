@@ -86,8 +86,7 @@ Run the selected agent inside a Git repository. The integration writes canonical
     {
       "subject": "project:example",
       "predicate": "uses",
-      "object": "tool:duckdb",
-      "confidence": 1
+      "object": "tool:duckdb"
     }
   ]
 }

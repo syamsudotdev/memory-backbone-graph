@@ -38,7 +38,7 @@ export default {
             kind: { ...text, maxLength: 4096 }, summary: text, source: { ...text, maxLength: 4096 }, evidence: optionalText, tags: { ...optionalText, maxLength: 4096 },
             facts: { type: "array", minItems: 1, maxItems: 1000, items: {
               type: "object", additionalProperties: false, required: ["subject", "predicate", "object"],
-              properties: { subject: canonicalKey, predicate: { ...text, maxLength: 4096 }, object: canonicalKey, confidence: { type: "number", minimum: 0, maximum: 1 }, evidence: optionalText, supersedes: { type: "string", pattern: `^fact_${uuid}$` }, tags: { ...optionalText, maxLength: 4096 } },
+              properties: { subject: canonicalKey, predicate: { ...text, maxLength: 4096 }, object: canonicalKey, evidence: optionalText, supersedes: { type: "string", pattern: `^fact_${uuid}$` }, tags: { ...optionalText, maxLength: 4096 } },
             } },
           },
         },

@@ -44,7 +44,6 @@ export function registerKnowledgeTools(pi: PiApi, Type: SchemaBuilder, operation
   const timestamp = () => Type.String({ pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$" });
   const fact = Type.Object({
     subject: canonicalKey(), predicate: text(4096), object: canonicalKey(),
-    confidence: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
     evidence: optionalText(), supersedes: Type.Optional(factId), tags: optionalText(4096),
   }, strict);
 

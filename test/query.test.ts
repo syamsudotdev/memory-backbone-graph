@@ -59,7 +59,7 @@ test("complete validation omits malformed and relationally unsafe shards", async
   await writeFile(join(base, "0001.csv"), encodeCsv(COLUMNS.facts, [original[0]]) + "broken,row\r\n");
   const make = (overrides: Record<string,string> = {}) => ({ ...original[0], fact_id: `fact_${randomUUID()}`, object: "mode:bad", supersedes: "", fingerprint: factFingerprint("topic:remote", "uses", "mode:bad"), created_at: "2025-02-01T00:00:00.000Z", ...overrides });
   const duplicate = make(); await writeFile(join(base, "0002.csv"), encodeCsv(COLUMNS.facts, [duplicate])); await writeFile(join(base, "0007.csv"), encodeCsv(COLUMNS.facts, [duplicate]));
-  await writeFile(join(base, "0003.csv"), encodeCsv(COLUMNS.facts, [make({ confidence: "2" })]));
+  await writeFile(join(base, "0003.csv"), encodeCsv(COLUMNS.facts, [make({ fingerprint: "invalid" })]));
   await writeFile(join(base, "0004.csv"), encodeCsv(COLUMNS.facts, [make({ episode_id: `ep_${randomUUID()}` })]));
   await writeFile(join(base, "0005.csv"), encodeCsv(COLUMNS.facts, [make({ supersedes: `fact_${randomUUID()}` })]));
   const wrongPair = make({ predicate: "rejects", supersedes: f.third.factIds[0] }); wrongPair.fingerprint = factFingerprint(wrongPair.subject, wrongPair.predicate, wrongPair.object); await writeFile(join(base, "0008.csv"), encodeCsv(COLUMNS.facts, [wrongPair]));

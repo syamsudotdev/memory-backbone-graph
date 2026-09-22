@@ -24,7 +24,7 @@ function fact(overrides: Record<string, string> = {}) {
   const row = {
     schema_version: "1", fact_id: `fact_${UUID_A}`, subject: "project:memory", predicate: "handles",
     object: "value:CSV", episode_id: EPISODE, created_at: "2026-09-21T00:00:00.000Z",
-    confidence: "1", evidence: "comma, quote \" and CR\rLF\n雪", supersedes: "", tags: "",
+    evidence: "comma, quote \" and CR\rLF\n雪", supersedes: "", tags: "",
     fingerprint: factFingerprint("project:memory", "handles", "value:CSV"), ...overrides,
   };
   return row;
@@ -87,7 +87,7 @@ test("strict UTC timestamps reject normalized impossible dates", () => {
 });
 
 test("reader supplies version 1 additive defaults but rejects missing required columns", () => {
-  const oldColumns = ["fact_id", "subject", "predicate", "object", "episode_id", "created_at", "confidence", "supersedes"];
+  const oldColumns = ["fact_id", "subject", "predicate", "object", "episode_id", "created_at", "supersedes"];
   const oldRow = fact();
   const [read] = readRecords("facts", encodeCsv(oldColumns, [oldRow]));
   assert.equal(read.schema_version, "1");

@@ -9,13 +9,13 @@ export type Dataset = "entities" | "episodes" | "facts";
 export const COLUMNS: Record<Dataset, readonly string[]> = {
   entities: ["schema_version", "entity_id", "type", "name", "canonical_key", "created_at"],
   episodes: ["schema_version", "episode_id", "created_at", "agent_id", "session_id", "kind", "summary", "source", "evidence", "tags"],
-  facts: ["schema_version", "fact_id", "subject", "predicate", "object", "episode_id", "created_at", "confidence", "evidence", "supersedes", "tags", "fingerprint"],
+  facts: ["schema_version", "fact_id", "subject", "predicate", "object", "episode_id", "created_at", "evidence", "supersedes", "tags", "fingerprint"],
 };
 
 const REQUIRED: Record<Dataset, readonly string[]> = {
   entities: ["entity_id", "type", "name", "canonical_key", "created_at"],
   episodes: ["episode_id", "created_at", "agent_id", "session_id", "kind", "summary", "source"],
-  facts: ["fact_id", "subject", "predicate", "object", "episode_id", "created_at", "confidence", "supersedes"],
+  facts: ["fact_id", "subject", "predicate", "object", "episode_id", "created_at", "supersedes"],
 };
 const DEFAULTS: Record<string, string> = { schema_version: SCHEMA_VERSION, evidence: "", tags: "", fingerprint: "" };
 const PREFIX = { entities: "ent_", episodes: "ep_", facts: "fact_" } as const;
@@ -93,8 +93,6 @@ export function validateRecord(dataset: Dataset, record: CsvRecord): void {
   if (dataset === "episodes") { validateAgentId(record.agent_id); rejectSecrets([record.session_id, record.kind, record.summary, record.source, record.evidence, record.tags]); }
   if (dataset === "facts") {
     canonicalKeyParts(record.subject); canonicalKeyParts(record.object); normalized(record.predicate, "predicate");
-    const confidence = Number(record.confidence);
-    if (!Number.isFinite(confidence) || confidence < 0 || confidence > 1) throw new Error("confidence must be between 0 and 1");
     if (record.episode_id && !isPrefixedUuid(record.episode_id, "ep_")) throw new Error("invalid episode_id");
     if (record.supersedes && !isPrefixedUuid(record.supersedes, "fact_")) throw new Error("invalid supersedes");
     if (record.fingerprint !== factFingerprint(record.subject, record.predicate, record.object)) throw new Error("invalid fingerprint");
