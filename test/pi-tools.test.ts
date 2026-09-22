@@ -10,6 +10,7 @@ import { promisify } from "node:util";
 import { pathToFileURL } from "node:url";
 import { ensureDuckDB } from "../src/duckdb.ts";
 import { KnowledgeError } from "../src/errors.ts";
+import { addKnowledgeGuidelines, knowledgeGuidelines } from "../src/pi-lifecycle.ts";
 import { registerKnowledgeTools } from "../src/pi-tools.ts";
 
 const exec = promisify(execFile);
@@ -54,6 +55,13 @@ test("registers exactly three strict schema-bound tools", () => {
   assert.equal(Value.Check(search, { terms: ["bad\u0000term"] }), false);
   assert.equal(Value.Check(get, { id: 4 }), false);
   assert.equal(Value.Check(get, { id: "fact_00000000-0000-4000-8000-000000000000", extra: true }), false);
+});
+
+test("lifecycle hook adds recall and capture guidance once", () => {
+  const event = { systemPromptOptions: { promptGuidelines: ["existing"] } };
+  addKnowledgeGuidelines(event); addKnowledgeGuidelines(event);
+  assert.deepEqual(event.systemPromptOptions.promptGuidelines, ["existing", ...knowledgeGuidelines]);
+  assert.match(knowledgeGuidelines[0], /knowledge_search/); assert.match(knowledgeGuidelines[1], /knowledge_append/);
 });
 
 test("extension entry loads in Pi and registers exactly three tools without a prompt", async t => {
