@@ -1,11 +1,13 @@
 {
   "name": "memory-backbone-graph",
   "version": "0.1.0",
-  "description": "Git-backed durable knowledge for Pi and Claude Code agents",
+  "description": "Git-backed durable knowledge for Pi, Claude Code, and OpenCode agents",
   "type": "module",
+  "exports": "./opencode/index.ts",
   "keywords": [
     "pi-package",
     "claude-code-plugin",
+    "opencode-plugin",
     "memory",
     "knowledge-graph"
   ],
@@ -14,6 +16,7 @@
     "claude",
     "extensions",
     "hooks",
+    "opencode",
     "skills",
     "src",
     "metadata",

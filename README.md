@@ -1,13 +1,14 @@
 # Memory Backbone Graph
 
-A project-local knowledge store for Pi and Claude Code agents.
+Memory Backbone Graph gives coding agents durable project memory that survives sessions, stays reviewable in Git, and needs no database server or additional AI call.
 
-Memory Backbone Graph stores durable knowledge as Git-tracked CSV files and queries it with DuckDB. It provides graph-shaped facts, provenance, history, and per-agent write isolation without a database server or an additional AI call.
+Knowledge that matters—decisions, constraints, preferences, and lessons—is stored as structured facts. Ownership remains with the project because canonical memory lives in Git. Recall brings back relevant facts and their provenance when prior context can affect a decision. Users decide what enters memory: only explicit or verified knowledge, never automatic transcripts. Provenance connects each fact to its source episode, agent, and session. Storage stays simple: reviewable CSV files hold canonical data, while local DuckDB handles queries. Integrations give Pi, Claude Code, and OpenCode the same recall and record workflow.
 
 ## Features
 
 - Native Pi tools: `knowledge_append`, `knowledge_search`, and `knowledge_get`
 - Claude Code plugin with a lifecycle hook and validated JSON command-line adapter
+- OpenCode V2 plugin with native typed tools and context guidance
 - Git-tracked CSV files as the source of truth
 - Structured `subject → predicate → object` facts
 - Episode and session provenance
@@ -16,13 +17,13 @@ Memory Backbone Graph stores durable knowledge as Git-tracked CSV files and quer
 - Local knowledge-only commits
 - DuckDB discovery and verified automatic bootstrap
 - Deterministic validation and basic secret detection
-- No package installation or build step
+- No build step or database server
 
 ## Requirements
 
 - Node.js 24 or newer
 - Git
-- Pi or Claude Code
+- Pi, Claude Code, or OpenCode V2
 - Network access for the first DuckDB bootstrap, unless a compatible DuckDB executable is already available
 
 ## Installation
@@ -60,7 +61,17 @@ claude --plugin-dir /absolute/path/to/memory-backbone-graph
 
 The `UserPromptSubmit` hook supplies the current Claude session ID and JSON adapter instructions without adding another model turn.
 
-Run Pi or Claude Code inside a Git repository. The integration writes canonical data to that repository's `knowledge/` directory.
+### OpenCode V2
+
+Install the package directly from GitHub:
+
+```sh
+opencode plugin add github:syamsudotdev/memory-backbone-graph
+```
+
+The plugin registers native typed knowledge tools and adds recall and capture guidance through OpenCode's model-context hook.
+
+Run the selected agent inside a Git repository. The integration writes canonical data to that repository's `knowledge/` directory.
 
 ## Usage
 

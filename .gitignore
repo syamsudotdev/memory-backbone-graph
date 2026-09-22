@@ -13,6 +13,8 @@
 !/extensions/**/*.ts
 !/hooks/
 !/hooks/**/*.json
+!/opencode/
+!/opencode/**/*.ts
 !/skills/
 !/skills/**/
 !/skills/**/SKILL.md

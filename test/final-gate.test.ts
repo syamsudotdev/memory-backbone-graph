@@ -19,7 +19,7 @@ async function files(path: string): Promise<string[]> {
 test("source allowlist and ignored runtime categories exclude generated dependencies", async () => {
   const { stdout } = await exec("git", ["status", "--short", "--untracked-files=all"], { cwd: root });
   const paths = stdout.trimEnd().split("\n").filter(line => line && !line.slice(0, 2).includes("D")).map(line => line.slice(3).split(" -> ").at(-1)!);
-  const allowed = /^(?:\.gitignore|package\.json|[^/]+\.md|\.claude-plugin\/.*\.json|claude\/.*\.ts|extensions\/.*\.ts|hooks\/.*\.json|skills\/.*\/SKILL\.md|src\/.*\.ts|test\/.*\.test\.ts|metadata\/duckdb\.json)$/;
+  const allowed = /^(?:\.gitignore|package\.json|[^/]+\.md|\.claude-plugin\/.*\.json|claude\/.*\.ts|extensions\/.*\.ts|hooks\/.*\.json|opencode\/.*\.ts|skills\/.*\/SKILL\.md|src\/.*\.ts|test\/.*\.test\.ts|metadata\/duckdb\.json)$/;
   for (const path of paths) assert.match(path, allowed, `source path outside allowlist: ${path}`);
 
   const ignored = ["knowledge/facts/a.csv", "runtime/duckdb/x/duckdb", "artifact.zip", "duckdb.exe", "cache.duckdb", "query.sql", "writer.lock", "scratch.tmp", ".cache/item", "active-shard.json"];
@@ -28,7 +28,8 @@ test("source allowlist and ignored runtime categories exclude generated dependen
 
   for (const name of ["package-lock.json", "pnpm-lock.yaml", "yarn.lock", "node_modules"]) await assert.rejects(access(join(root, name)));
   const manifest = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
-  assert.ok(manifest.keywords.includes("pi-package"));
+  assert.ok(manifest.keywords.includes("pi-package")); assert.ok(manifest.keywords.includes("opencode-plugin"));
+  assert.equal(manifest.exports, "./opencode/index.ts");
   assert.deepEqual(manifest.pi, { extensions: ["./extensions/knowledge.ts"], skills: ["./skills"] });
   assert.deepEqual(manifest.peerDependencies, { "@earendil-works/pi-coding-agent": "*", typebox: "*" });
   const plugin = JSON.parse(await readFile(join(root, ".claude-plugin/plugin.json"), "utf8"));
@@ -43,7 +44,7 @@ test("source allowlist and ignored runtime categories exclude generated dependen
 });
 
 test("extension source has no model, prompt, network, extraction, embedding, or arbitrary-SQL path", async () => {
-  const sourceFiles = [...await files(join(root, "src")), ...await files(join(root, "extensions")), ...await files(join(root, "claude"))].filter(path => path.endsWith(".ts"));
+  const sourceFiles = [...await files(join(root, "src")), ...await files(join(root, "extensions")), ...await files(join(root, "claude")), ...await files(join(root, "opencode"))].filter(path => path.endsWith(".ts"));
   const source = (await Promise.all(sourceFiles.map(path => readFile(path, "utf8")))).join("\n");
   const imports = [...source.matchAll(/from\s+["']([^"']+)["']/g)].map(match => match[1]).filter(path => !path.startsWith(".") && !path.startsWith("node:"));
   assert.deepEqual([...new Set(imports)].sort(), ["@earendil-works/pi-coding-agent", "typebox"]);
