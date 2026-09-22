@@ -1,43 +1,130 @@
 # Memory Backbone Graph
 
-This extension repository uses a reverse-ignore allowlist. Git tracks root documentation, `docs/`, TypeScript under `src/`, `node:test` files named `*.test.ts` under `test/`, and `metadata/duckdb.json`. Planning records, generated knowledge, DuckDB binaries and archives, databases, SQL, caches, locks, temporary files, active-shard state, and all other runtime state remain ignored.
+A project-local knowledge store for Pi agents.
 
-## DuckDB metadata
+Memory Backbone Graph stores durable knowledge as Git-tracked CSV files and queries it with DuckDB. It provides graph-shaped facts, provenance, history, and per-agent write isolation without a database server or an additional AI call.
 
-`metadata/duckdb.json` pins one DuckDB version and the official release artifact for every supported target. To update it, read official release metadata, select Linux x64/arm64, macOS universal, and Windows x64 CLI ZIP assets from the same exact version, and copy each published SHA-256 digest. Do not download or commit artifact bytes. Validate the URL origins and checksum shapes with the ticket verification command.
+## Features
 
-## Target repositories
+- Three Pi tools: `knowledge_append`, `knowledge_search`, and `knowledge_get`
+- Git-tracked CSV files as the source of truth
+- Structured `subject → predicate → object` facts
+- Episode and session provenance
+- Append-only supersession history
+- Separate monthly shards for each agent
+- Local knowledge-only commits
+- DuckDB discovery and verified automatic bootstrap
+- Deterministic validation and basic secret detection
+- No package installation or build step
 
-This ignore policy applies only to the extension source repository. A target project repository must permit canonical `knowledge/**/*.csv` and `knowledge/metadata/schema-version` to be tracked. Respect the target repository's ignore policy; never use `git add --force` to bypass it.
+## Requirements
 
-## Synchronization workflow
+- Node.js 24 or newer
+- Git
+- Pi
+- Network access for the first DuckDB bootstrap, unless a compatible DuckDB executable is already available
 
-A knowledge append creates a local knowledge-only commit on the branch that was current when the append began. It never pulls, pushes, checks out, or merges. Share knowledge separately with the project's normal workflow: first fetch and integrate remote changes as appropriate, resolve any knowledge CSV conflicts without dropping rows, then explicitly push the branch or merge it into a shared branch. If the branch moves during append, the valid knowledge files remain in the working tree; retry the same append after reconciling the branch to commit them without duplicate rows.
+## Installation
+
+Clone this repository and load its extension from the Git project where you want to store knowledge:
+
+```sh
+cd /path/to/your/project
+pi -e /absolute/path/to/memory-backbone-graph/.pi/extensions/knowledge.ts
+```
+
+Pi must run inside a Git repository. The extension writes canonical data to that repository's `knowledge/` directory.
+
+## Usage
+
+### Append knowledge
+
+```json
+{
+  "kind": "decision",
+  "summary": "Use DuckDB for knowledge queries",
+  "source": "conversation",
+  "facts": [
+    {
+      "subject": "project:example",
+      "predicate": "uses",
+      "object": "tool:duckdb",
+      "confidence": 1
+    }
+  ]
+}
+```
+
+### Search knowledge
+
+```json
+{
+  "terms": ["DuckDB"],
+  "subject": "project:example",
+  "limit": 20
+}
+```
+
+Set `history` to `true` to include superseded facts.
+
+### Get one record
+
+```json
+{
+  "id": "fact_00000000-0000-4000-8000-000000000000"
+}
+```
+
+The ID can identify a fact, episode, or entity.
+
+## Storage model
+
+Canonical knowledge uses this layout:
+
+```text
+knowledge/
+├── entities/<agent>/<year-month>/<sequence>.csv
+├── episodes/<agent>/<year-month>/<sequence>.csv
+├── facts/<agent>/<year-month>/<sequence>.csv
+└── metadata/schema-version
+```
+
+Each agent writes to its own shard. The extension derives the agent identity from the operating-system username and hostname. DuckDB creates temporary query views from the CSV files; database files are not canonical data.
+
+An append creates a local knowledge-only commit on the current branch. It does not pull, push, merge, or change branches. Use your normal Git workflow to share those commits.
+
+## Configuration
+
+| Variable | Purpose |
+|---|---|
+| `PI_KNOWLEDGE_DUCKDB_PATH` | Use a specific compatible DuckDB executable. |
+| `PI_KNOWLEDGE_SHARD_ROW_LIMIT` | Set the maximum rows per shard. The default is `10000`. |
+| `PI_OFFLINE=1` | Disable DuckDB downloads. |
+
+If no configured, system, or managed DuckDB executable is compatible, the first query downloads and verifies the pinned official artifact. Managed binaries and other runtime files remain ignored by Git.
 
 ## Data safety
 
-The extension applies deterministic checks for common private-key headers, access-token prefixes, credential-bearing URLs, and high-confidence credential assignments. These checks are limited and are not a comprehensive secret scanner. A rejection reports only the rule category. It does not echo the candidate value. There is no bypass flag. Correct a false positive by changing the input so it does not match a credential form.
+The extension rejects common private-key headers, token prefixes, credential-bearing URLs, and high-confidence credential assignments. This check is not a complete secret scanner.
 
-Correct ordinary knowledge with an explicit superseding fact. Supersession preserves the prior fact for audit and historical queries.
+Correct ordinary knowledge by appending a fact that supersedes the old fact. This keeps the earlier record available for history and audit.
 
-Deleting or superseding a sensitive row does not remove it from Git history. Sensitive-data removal is a manual repository operation. Coordinate all users first. Rewrite every affected reference with an appropriate Git history-rewriting tool. Replace the remote history. Invalidate or replace every existing clone. Rotate every exposed credential. The extension does not automate history rewriting or credential rotation.
+Deleting or superseding sensitive data does not remove it from Git history. If sensitive data enters the repository, rotate the exposed credential and use a Git history-rewriting tool to remove every affected reference. Coordinate the rewrite with all repository users and replace existing clones.
 
-CSV encoding, generated SQL literals, process argument arrays, and normalized project-local paths are separate trust boundaries. Do not reuse one boundary's encoding as validation for another boundary.
+## Development
 
-## Verification
+The project uses Node's built-in TypeScript support and test runner. It has no package manifest or build step.
 
-Use Node.js 24 or newer. Node runs the TypeScript source directly, so this repository has no build step or package installation.
-
-A fresh clone has no committed DuckDB executable. Run the complete suite with one test file at a time so the first real-query test can bootstrap the managed executable without a concurrent installer:
+Run the complete suite serially so the first query can bootstrap DuckDB safely:
 
 ```sh
 node --test --test-concurrency=1 test/*.test.ts
 ```
 
-When no compatible configured, system, or managed executable exists, this command downloads, verifies, and installs only the pinned official artifact. It requires network access for that first bootstrap. The managed executable remains ignored. Subsequent runs can prohibit downloads explicitly:
+After the managed executable exists, verify offline operation with:
 
 ```sh
 env PI_OFFLINE=1 node --test --test-concurrency=1 test/*.test.ts
 ```
 
-The test suite uses only temporary repositories under the operating system temporary directory. It does not require administrator rights. The final gate checks the requirement matrix, source allowlist, ignored runtime categories, dependencies, extension call path, two-agent behavior, and CSV-only rebuild behavior.
+Tests use temporary Git repositories and do not require administrator access.

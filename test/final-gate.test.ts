@@ -16,29 +16,10 @@ async function files(path: string): Promise<string[]> {
   return out;
 }
 
-test("requirement matrix has one complete evidence row per FR, NFR, decision, MVP criterion, and ticket", async () => {
-  const matrix = await readFile(join(root, "docs/requirements-matrix.md"), "utf8"), lines = matrix.split("\n");
-  const verify = (id: string, cells: number) => {
-    const rows = lines.filter(line => line.startsWith(`| ${id} |`));
-    assert.equal(rows.length, 1, `${id} must have exactly one table row`);
-    const values = rows[0].split("|").slice(1, -1).map(value => value.trim());
-    assert.equal(values.length, cells, `${id} has the wrong column count`);
-    assert.ok(values.every(Boolean), `${id} has an empty evidence cell`);
-  };
-  for (let i = 1; i <= 39; i++) verify(`FR-${String(i).padStart(3, "0")}`, 3);
-  for (let i = 1; i <= 7; i++) verify(`NFR-${String(i).padStart(3, "0")}`, 3);
-  for (let i = 1; i <= 27; i++) verify(`D-${String(i).padStart(3, "0")}`, 2);
-  for (let i = 1; i <= 17; i++) verify(`MVP-${String(i).padStart(2, "0")}`, 2);
-  for (let i = 1; i <= 9; i++) verify(`TICKET-${String(i).padStart(3, "0")}`, 2);
-  const manual = await readFile(join(root, "docs/manual-verification.md"), "utf8");
-  for (const heading of ["Initial state", "Exact actions", "Expected observable result", "Failure condition", "Actual evidence"]) assert.match(manual, new RegExp(`## ${heading}`));
-  assert.match(manual, /KNOWLEDGE_TOOLS=knowledge_append,knowledge_search,knowledge_get/); assert.match(manual, /messageCount: 0/);
-});
-
 test("source allowlist and ignored runtime categories exclude generated dependencies", async () => {
   const { stdout } = await exec("git", ["status", "--short", "--untracked-files=all"], { cwd: root });
-  const paths = stdout.trim().split("\n").filter(Boolean).map(line => line.slice(3));
-  const allowed = /^(?:\.gitignore|[^/]+\.md|docs\/.*\.md|src\/.*\.ts|test\/.*\.test\.ts|metadata\/duckdb\.json|\.pi\/extensions\/.*\.ts)$/;
+  const paths = stdout.trimEnd().split("\n").filter(line => line && !line.slice(0, 2).includes("D")).map(line => line.slice(3));
+  const allowed = /^(?:\.gitignore|[^/]+\.md|src\/.*\.ts|test\/.*\.test\.ts|metadata\/duckdb\.json|\.pi\/extensions\/.*\.ts)$/;
   for (const path of paths) assert.match(path, allowed, `source path outside allowlist: ${path}`);
 
   const ignored = ["knowledge/facts/a.csv", "runtime/duckdb/x/duckdb", "artifact.zip", "duckdb.exe", "cache.duckdb", "query.sql", "writer.lock", "scratch.tmp", ".cache/item", "active-shard.json"];
@@ -46,7 +27,8 @@ test("source allowlist and ignored runtime categories exclude generated dependen
   assert.deepEqual(checked.stdout.trim().split("\n"), ignored);
 
   for (const name of ["package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "node_modules"]) await assert.rejects(access(join(root, name)));
-  const tracked = (await exec("git", ["ls-files"], { cwd: root })).stdout.trim().split("\n").filter(Boolean);
+  const deleted = new Set((await exec("git", ["ls-files", "--deleted"], { cwd: root })).stdout.trim().split("\n").filter(Boolean));
+  const tracked = (await exec("git", ["ls-files"], { cwd: root })).stdout.trim().split("\n").filter(path => path && !deleted.has(path));
   for (const path of tracked) assert.match(path, allowed, `tracked path outside allowlist: ${path}`);
   assert.equal(tracked.some(path => /(?:^|\/)(?:duckdb(?:\.exe)?|.*\.(?:zip|tar|gz|duckdb))$/.test(path)), false);
 });

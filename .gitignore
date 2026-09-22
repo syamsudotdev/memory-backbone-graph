@@ -4,9 +4,6 @@
 # Reproducible source and tests (created by later tickets).
 !/.gitignore
 !/README.md
-!/docs/
-!/docs/**/
-!/docs/**/*.md
 !/src/
 !/src/**/
 !/src/**/*.ts

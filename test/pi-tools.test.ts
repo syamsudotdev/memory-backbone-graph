@@ -56,6 +56,16 @@ test("registers exactly three strict schema-bound tools", () => {
   assert.equal(Value.Check(get, { id: "fact_00000000-0000-4000-8000-000000000000", extra: true }), false);
 });
 
+test("extension entry loads in Pi and registers exactly three tools without a prompt", async t => {
+  const root = await mkdtemp(join(tmpdir(), "knowledge-pi-entry-")); t.after(() => rm(root, { recursive: true, force: true }));
+  const wrapper = join(root, "extension.ts");
+  await writeFile(wrapper, `import knowledge from ${JSON.stringify(pathToFileURL(join(process.cwd(), ".pi/extensions/knowledge.ts")).href)};\nexport default function (pi: any) { knowledge(pi); pi.on("session_start", () => console.error("KNOWLEDGE_TOOLS=" + pi.getAllTools().map((tool: any) => tool.name).filter((name: string) => name.startsWith("knowledge_")).join(","))); }\n`);
+  await assert.rejects(
+    exec(piEntry, ["--mode", "rpc", "--no-session", "--offline", "--no-extensions", "--no-builtin-tools", "-e", wrapper], { timeout: 1_000 }),
+    (error: any) => { assert.match(error.stderr, /KNOWLEDGE_TOOLS=knowledge_append,knowledge_search,knowledge_get/); return true; },
+  );
+});
+
 test("append uses the context session, commits locally, and retrieval is read-only", async t => {
   const root = await repository(); t.after(() => rm(root, { recursive: true, force: true }));
   const registered = tools(), context = { cwd: root, sessionManager: { getSessionId: () => "session-stable" } };
