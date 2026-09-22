@@ -19,7 +19,7 @@ async function files(path: string): Promise<string[]> {
 test("source allowlist and ignored runtime categories exclude generated dependencies", async () => {
   const { stdout } = await exec("git", ["status", "--short", "--untracked-files=all"], { cwd: root });
   const paths = stdout.trimEnd().split("\n").filter(line => line && !line.slice(0, 2).includes("D")).map(line => line.slice(3));
-  const allowed = /^(?:\.gitignore|[^/]+\.md|src\/.*\.ts|test\/.*\.test\.ts|metadata\/duckdb\.json|\.pi\/extensions\/.*\.ts)$/;
+  const allowed = /^(?:\.gitignore|[^/]+\.md|src\/.*\.ts|test\/.*\.test\.ts|metadata\/duckdb\.json|\.pi\/(?:extensions\/.*\.ts|skills\/.*\/SKILL\.md))$/;
   for (const path of paths) assert.match(path, allowed, `source path outside allowlist: ${path}`);
 
   const ignored = ["knowledge/facts/a.csv", "runtime/duckdb/x/duckdb", "artifact.zip", "duckdb.exe", "cache.duckdb", "query.sql", "writer.lock", "scratch.tmp", ".cache/item", "active-shard.json"];

@@ -13,6 +13,9 @@
 !/.pi/
 !/.pi/extensions/
 !/.pi/extensions/**/*.ts
+!/.pi/skills/
+!/.pi/skills/**/
+!/.pi/skills/**/SKILL.md
 
 # Pinned runtime artifact metadata, never runtime artifacts themselves.
 !/metadata/

@@ -26,12 +26,16 @@ Memory Backbone Graph stores durable knowledge as Git-tracked CSV files and quer
 
 ## Installation
 
-Clone this repository and load its extension from the Git project where you want to store knowledge:
+Clone this repository and load its extension and skill from the Git project where you want to store knowledge:
 
 ```sh
 cd /path/to/your/project
-pi -e /absolute/path/to/memory-backbone-graph/.pi/extensions/knowledge.ts
+pi \
+  -e /absolute/path/to/memory-backbone-graph/.pi/extensions/knowledge.ts \
+  --skill /absolute/path/to/memory-backbone-graph/.pi/skills/memory-backbone/SKILL.md
 ```
+
+The extension provides the tools. The skill guides agents to recall relevant project knowledge and record durable facts without storing temporary task state.
 
 Pi must run inside a Git repository. The extension writes canonical data to that repository's `knowledge/` directory.
 
