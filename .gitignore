@@ -1,0 +1,41 @@
+# Reverse ignore: repository contents are ignored unless explicitly allowed.
+*
+
+# Reproducible source and tests (created by later tickets).
+!/.gitignore
+!/README.md
+!/docs/
+!/docs/**/
+!/docs/**/*.md
+!/src/
+!/src/**/
+!/src/**/*.ts
+!/test/
+!/test/**/
+!/test/**/*.test.ts
+!/.pi/
+!/.pi/extensions/
+!/.pi/extensions/**/*.ts
+
+# Pinned runtime artifact metadata, never runtime artifacts themselves.
+!/metadata/
+!/metadata/duckdb.json
+
+# Planning and generated/runtime state are never source.
+/.wayfinder/
+/.ralph/
+/knowledge/
+/runtime/
+**/knowledge/
+**/runtime/
+*.zip
+*.exe
+*.duckdb
+*.sql
+*.lock
+*.tmp
+*.temp
+*.cache
+**/.cache/
+**/node_modules/
+**/active-shard*

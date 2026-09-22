@@ -1,0 +1,41 @@
+{
+  "version": "1.5.5",
+  "metadata_source": "https://api.github.com/repos/duckdb/duckdb/releases/tags/v1.5.5",
+  "artifacts": [
+    {
+      "os": "linux",
+      "arch": "x64",
+      "url": "https://github.com/duckdb/duckdb/releases/download/v1.5.5/duckdb_cli-linux-amd64.zip",
+      "archive_format": "zip",
+      "sha256": "08c0ca117111fcede14239d0093792352befdc174218c344d232c13279643d05"
+    },
+    {
+      "os": "linux",
+      "arch": "arm64",
+      "url": "https://github.com/duckdb/duckdb/releases/download/v1.5.5/duckdb_cli-linux-arm64.zip",
+      "archive_format": "zip",
+      "sha256": "02163197027a42149147364d31fa67cac82108517a4be43304a1cc226eaef07a"
+    },
+    {
+      "os": "darwin",
+      "arch": "x64",
+      "url": "https://github.com/duckdb/duckdb/releases/download/v1.5.5/duckdb_cli-osx-universal.zip",
+      "archive_format": "zip",
+      "sha256": "7a4bc3a93f7f92f5b40cd09c21afaf98e415c6cb9d9170064993782e779f4115"
+    },
+    {
+      "os": "darwin",
+      "arch": "arm64",
+      "url": "https://github.com/duckdb/duckdb/releases/download/v1.5.5/duckdb_cli-osx-universal.zip",
+      "archive_format": "zip",
+      "sha256": "7a4bc3a93f7f92f5b40cd09c21afaf98e415c6cb9d9170064993782e779f4115"
+    },
+    {
+      "os": "win32",
+      "arch": "x64",
+      "url": "https://github.com/duckdb/duckdb/releases/download/v1.5.5/duckdb_cli-windows-amd64.zip",
+      "archive_format": "zip",
+      "sha256": "e1428b7114a841626b5054723731cbf45c6df91b42ae1a6c355f88fad1f6dc4c"
+    }
+  ]
+}
