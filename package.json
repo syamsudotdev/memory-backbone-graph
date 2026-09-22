@@ -1,0 +1,36 @@
+{
+  "name": "memory-backbone-graph",
+  "version": "0.1.0",
+  "description": "Git-backed durable knowledge tools for Pi agents",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "memory",
+    "knowledge-graph"
+  ],
+  "files": [
+    "extensions",
+    "skills",
+    "src",
+    "metadata",
+    "README.md"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions/knowledge.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "scripts": {
+    "test": "node --test --test-concurrency=1 test/*.test.ts"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  }
+}

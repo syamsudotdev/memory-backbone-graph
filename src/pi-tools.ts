@@ -76,7 +76,7 @@ export function registerKnowledgeTools(pi: PiApi, Type: SchemaBuilder, operation
   pi.registerTool({
     name: "knowledge_search",
     label: "Search Knowledge",
-    description: "Search current or historical durable knowledge with structured filters and provenance.",
+    description: "Search current or historical durable knowledge with structured filters and provenance. Use terms for case-insensitive substring discovery when the exact subject or object key is unknown, then reuse discovered keys as exact filters.",
     parameters: Type.Object({
       terms: Type.Optional(Type.Array(Type.String({ maxLength: 4096, pattern: "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f]*$" }), { maxItems: 20 })),
       subject: Type.Optional(canonicalKey()), predicate: optionalText(4096), object: Type.Optional(canonicalKey()), kind: optionalText(4096), agent_id: optionalText(4096), session_id: optionalText(4096),

@@ -4,18 +4,18 @@
 # Reproducible source and tests (created by later tickets).
 !/.gitignore
 !/README.md
+!/package.json
+!/extensions/
+!/extensions/**/*.ts
+!/skills/
+!/skills/**/
+!/skills/**/SKILL.md
 !/src/
 !/src/**/
 !/src/**/*.ts
 !/test/
 !/test/**/
 !/test/**/*.test.ts
-!/.pi/
-!/.pi/extensions/
-!/.pi/extensions/**/*.ts
-!/.pi/skills/
-!/.pi/skills/**/
-!/.pi/skills/**/SKILL.md
 
 # Pinned runtime artifact metadata, never runtime artifacts themselves.
 !/metadata/

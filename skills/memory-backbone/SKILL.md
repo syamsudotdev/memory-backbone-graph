@@ -10,9 +10,11 @@ Use project memory when it can change the work. Keep it small and trustworthy.
 ## Recall
 
 1. Search before making a decision that can depend on prior project knowledge.
-2. Use narrow structured filters when the subject or relation is known.
-3. Use `knowledge_get` when a result references a fact, episode, or entity that needs exact provenance.
-4. Treat no result as no stored knowledge, not proof that the knowledge is false.
+2. When a subject or object key is unknown, search `terms` with a short identifying fragment. Terms use case-insensitive literal substring matching across facts and episode text.
+3. Reuse discovered canonical keys in exact `subject` or `object` filters.
+4. Use narrow structured filters when the subject or relation is known.
+5. Use `knowledge_get` when a result references a fact, episode, or entity that needs exact provenance.
+6. Treat no result as no stored knowledge, not proof that the knowledge is false.
 
 Recall is complete when the relevant current facts and their provenance are known, or the search returns no relevant facts.
 
