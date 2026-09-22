@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
-  COLUMNS, canonicalKey, encodeCsv, factFingerprint, generateId,
+  COLUMNS, canonicalKey, canonicalKeyParts, encodeCsv, factFingerprint, generateId,
   isPrefixedUuid, normalizeAgentId, parseCsv, readRecords, shardPath,
 } from "../src/records.ts";
 
@@ -17,14 +17,14 @@ function entity(overrides: Record<string, string> = {}) {
 function episode(overrides: Record<string, string> = {}) {
   return { schema_version: "1", episode_id: EPISODE, created_at: "2026-09-21T00:00:00.000Z",
     agent_id: "bot@team@host", session_id: "session-1", kind: "decision", summary: "Chosen",
-    source: "conversation", evidence: "", tags: "", ...overrides };
+    source: "conversation", evidence: "", ...overrides };
 }
 
 function fact(overrides: Record<string, string> = {}) {
   const row = {
     schema_version: "1", fact_id: `fact_${UUID_A}`, subject: "project:memory", predicate: "handles",
     object: "value:CSV", episode_id: EPISODE, created_at: "2026-09-21T00:00:00.000Z",
-    evidence: "comma, quote \" and CR\rLF\n雪", supersedes: "", tags: "",
+    evidence: "comma, quote \" and CR\rLF\n雪", supersedes: "",
     fingerprint: factFingerprint("project:memory", "handles", "value:CSV"), ...overrides,
   };
   return row;
@@ -70,6 +70,7 @@ test("fingerprints frame triple elements without delimiter ambiguity", () => {
 test("canonical keys and canonical paths are deterministic", () => {
   assert.equal(canonicalKey("project", "memory"), "project:memory");
   assert.throws(() => canonicalKey(" project", "memory"), /invalid entity type/);
+  assert.throws(() => canonicalKeyParts("project:memory:extra"), /canonical key/);
   assert.equal(shardPath("facts", "sam@mbp-sam", new Date("2026-09-21T23:00:00-02:00"), 2), "knowledge/facts/sam@mbp-sam/2026-09/0002.csv");
 });
 
@@ -92,7 +93,6 @@ test("reader supplies version 1 additive defaults but rejects missing required c
   const [read] = readRecords("facts", encodeCsv(oldColumns, [oldRow]));
   assert.equal(read.schema_version, "1");
   assert.equal(read.evidence, "");
-  assert.equal(read.tags, "");
   assert.equal(read.fingerprint, oldRow.fingerprint);
   assert.throws(() => readRecords("facts", "fact_id,subject\r\nx,y\r\n"), /missing required column: predicate/);
   assert.throws(() => readRecords("facts", encodeCsv(COLUMNS.facts, [oldRow, oldRow])), /duplicate primary ID/);

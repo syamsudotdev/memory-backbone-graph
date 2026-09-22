@@ -7,7 +7,6 @@ import type { SearchFilters } from "../src/query.ts";
 type SchemaBuilder = {
   Object(properties: Record<string, unknown>, options?: Record<string, unknown>): unknown;
   String(options?: Record<string, unknown>): unknown;
-  Number(options?: Record<string, unknown>): unknown;
   Integer(options?: Record<string, unknown>): unknown;
   Boolean(options?: Record<string, unknown>): unknown;
   Array(items: unknown, options?: Record<string, unknown>): unknown;
@@ -42,9 +41,10 @@ export function registerKnowledgeTools(pi: PiApi, Type: SchemaBuilder, operation
   const stableId = Type.String({ pattern: `^(?:fact_|ep_|ent_)${uuid}$` });
   const factId = Type.String({ pattern: `^fact_${uuid}$` });
   const timestamp = () => Type.String({ pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$" });
+  const kind = Type.String({ minLength: 1, maxLength: 64, pattern: "^[a-z][a-z0-9_-]*$" });
   const fact = Type.Object({
-    subject: canonicalKey(), predicate: text(4096), object: canonicalKey(),
-    evidence: optionalText(), supersedes: Type.Optional(factId), tags: optionalText(4096),
+    subject: canonicalKey(), predicate: Type.String({ minLength: 1, maxLength: 128, pattern: "^[a-z][a-z0-9_-]*(?: [a-z][a-z0-9_-]*)*$" }), object: canonicalKey(),
+    evidence: optionalText(), supersedes: Type.Optional(factId),
   }, strict);
 
   pi.registerTool({
@@ -52,10 +52,10 @@ export function registerKnowledgeTools(pi: PiApi, Type: SchemaBuilder, operation
     label: "Append Knowledge",
     description: "Append explicit durable knowledge to the active Git project and commit only its canonical knowledge files.",
     parameters: Type.Object({
-      kind: text(4096), summary: text(), source: text(4096), evidence: optionalText(), tags: optionalText(4096),
+      kind, summary: text(), source: text(4096), evidence: optionalText(),
       facts: Type.Array(fact, { minItems: 1, maxItems: 1000 }),
     }, strict),
-    async execute(_id, params: { kind: string; summary: string; source: string; evidence?: string; tags?: string; facts: AppendFact[] }, _signal, _update, context) {
+    async execute(_id, params: { kind: string; summary: string; source: string; evidence?: string; facts: AppendFact[] }, _signal, _update, context) {
       try {
         const sessionId = context.sessionManager?.getSessionId();
         if (!sessionId) return failure("append", new KnowledgeError("setup", "stable Pi session ID is unavailable"));
@@ -68,7 +68,7 @@ export function registerKnowledgeTools(pi: PiApi, Type: SchemaBuilder, operation
   pi.registerTool({
     name: "knowledge_search",
     label: "Search Knowledge",
-    description: "Search current or historical durable knowledge with structured filters and provenance. Use terms for case-insensitive substring discovery when the exact subject or object key is unknown, then reuse discovered keys as exact filters.",
+    description: "Search current or historical durable knowledge with structured filters, provenance, and exact completion metadata. Use terms for case-insensitive substring discovery when the exact subject or object key is unknown, then reuse discovered keys as exact filters.",
     parameters: Type.Object({
       terms: Type.Optional(Type.Array(Type.String({ maxLength: 4096, pattern: "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u007f]*$" }), { maxItems: 20 })),
       subject: Type.Optional(canonicalKey()), predicate: optionalText(4096), object: Type.Optional(canonicalKey()), kind: optionalText(4096), agent_id: optionalText(4096), session_id: optionalText(4096),

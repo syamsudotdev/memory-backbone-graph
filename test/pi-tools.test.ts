@@ -48,6 +48,8 @@ test("registers exactly three strict schema-bound tools", () => {
   const get = registered.get("knowledge_get").parameters;
   assert.equal(Value.Check(append, { kind: "decision", summary: "s", source: "user", facts: [] }), false);
   assert.equal(Value.Check(append, { kind: "", summary: "s", source: "user", facts: [{ subject: "not-a-key", predicate: "", object: "tool:y" }] }), false);
+  assert.equal(Value.Check(append, { kind: "decision", summary: "s", source: "user", tags: "unused", facts: [{ subject: "project:x", predicate: "uses", object: "tool:y" }] }), false);
+  assert.equal(Value.Check(append, { kind: "Decision", summary: "s", source: "user", facts: [{ subject: "project:x", predicate: "Uses", object: "tool:y" }] }), false);
   assert.equal(Value.Check(append, { kind: "decision", summary: "s", source: "user", facts: [{ subject: "project:x", predicate: "uses", object: "tool:y", supersedes: "ep_00000000-0000-4000-8000-000000000000", extra: true }] }), false);
   assert.equal(Value.Check(search, { limit: 0 }), false);
   assert.equal(Value.Check(search, { from: "2025-01-01", subject: "bad", arbitrary_sql: "select 1" }), false);

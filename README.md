@@ -102,7 +102,7 @@ Run the selected agent inside a Git repository. The integration writes canonical
 }
 ```
 
-Set `history` to `true` to include superseded facts.
+Set `history` to `true` to include superseded facts. Search responses include `returned`, `total`, and `hasMore`; `total` counts every valid matching fact before the limit. `partial` separately reports whether corrupt shards were omitted.
 
 ### Get one record
 

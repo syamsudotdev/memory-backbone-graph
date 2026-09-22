@@ -28,17 +28,18 @@ test("real DuckDB searches fixed relations, filters, history, provenance and sta
   const duckdbPath = await ensureDuckDB({ extensionDir }); const f = await fixture(); t.after(() => rm(f.root, { recursive: true, force: true })); const options = { duckdbPath, extensionDir };
   const current = await searchKnowledge(f.root, {}, options); assert.deepEqual(current.rows.map(r => r.fact_id), f.third.factIds); assert.equal(current.rows[0].session_id, "session-3");
   const history = await searchKnowledge(f.root, { history: true }, options); assert.deepEqual(history.rows.map(r => r.fact_id), [...f.first.factIds, ...f.second.factIds, ...f.third.factIds]);
+  const bounded = await searchKnowledge(f.root, { history: true, limit: 1 }, options); assert.deepEqual({ returned: bounded.returned, total: bounded.total, hasMore: bounded.hasMore }, { returned: 1, total: 3, hasMore: true });
   const filters = { terms: ["REMOTE", "container"], subject: "topic:remote", predicate: "uses", object: "mode:container", kind: "correction", agent_id: "tester@host", session_id: "session-3", from: "2025-01-03T00:00:00Z", to: "2025-01-03T00:00:00Z", limit: 1 };
   for (const key of Object.keys(filters)) assert.equal((await searchKnowledge(f.root, { [key]: (filters as any)[key] }, options)).rows.length, 1, key);
   assert.equal((await searchKnowledge(f.root, filters, options)).rows.length, 1);
   assert.equal((await getKnowledge(f.root, f.first.factIds[0], options)).rows[0].summary, "Remote execution choice");
   assert.equal((await getKnowledge(f.root, f.first.episodeId, options)).rows[0].session_id, "session-1");
-  const entity = current.rows[0].subject as string, entities = await searchKnowledge(f.root, {}, options); assert.ok(entity); // entity ID is obtained from the fixed entity relation via known fixture lookup below
+  const entity = current.rows[0].subject as string; assert.ok(entity); // entity ID is obtained from the fixed entity relation via known fixture lookup below
   const entityFiles = await readdir(join(f.root, "knowledge", "entities", "tester@host", "2025-01")); const csv = await readFile(join(f.root, "knowledge", "entities", "tester@host", "2025-01", entityFiles[0]), "utf8"); const entityId = csv.match(/ent_[0-9a-f-]{36}/)![0]; assert.equal((await getKnowledge(f.root, entityId, options)).rows[0].canonical_key, "topic:remote");
   assert.equal((await searchKnowledge(f.root, { limit: 1 }, options)).rows.length, 1); assert.equal((await searchKnowledge(f.root, { limit: 100 }, options)).rows.length, 1);
   await assert.rejects(searchKnowledge(f.root, { limit: 0 }, options), /limit/); await assert.rejects(searchKnowledge(f.root, { limit: 101 }, options), /limit/);
   assert.equal((await searchKnowledge(f.root, { terms: ["'; DROP TABLE facts; --"] }, options)).rows.length, 0);
-  assert.equal((await searchKnowledge(f.root, { terms: ["%"] }, options)).rows.length, 0);
+  const none = await searchKnowledge(f.root, { terms: ["%"] }, options); assert.equal(none.rows.length, 0); assert.deepEqual({ returned: none.returned, total: none.total, hasMore: none.hasMore }, { returned: 0, total: 0, hasMore: false });
 });
 
 test("corrupt shard is omitted explicitly and canonical bytes stay unchanged", async t => {

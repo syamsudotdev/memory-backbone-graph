@@ -35,10 +35,10 @@ export default {
         input: {
           type: "object", additionalProperties: false, required: ["kind", "summary", "source", "facts"],
           properties: {
-            kind: { ...text, maxLength: 4096 }, summary: text, source: { ...text, maxLength: 4096 }, evidence: optionalText, tags: { ...optionalText, maxLength: 4096 },
+            kind: { type: "string", minLength: 1, maxLength: 64, pattern: "^[a-z][a-z0-9_-]*$" }, summary: text, source: { ...text, maxLength: 4096 }, evidence: optionalText,
             facts: { type: "array", minItems: 1, maxItems: 1000, items: {
               type: "object", additionalProperties: false, required: ["subject", "predicate", "object"],
-              properties: { subject: canonicalKey, predicate: { ...text, maxLength: 4096 }, object: canonicalKey, evidence: optionalText, supersedes: { type: "string", pattern: `^fact_${uuid}$` }, tags: { ...optionalText, maxLength: 4096 } },
+              properties: { subject: canonicalKey, predicate: { type: "string", minLength: 1, maxLength: 128, pattern: "^[a-z][a-z0-9_-]*(?: [a-z][a-z0-9_-]*)*$" }, object: canonicalKey, evidence: optionalText, supersedes: { type: "string", pattern: `^fact_${uuid}$` } },
             } },
           },
         },
@@ -49,7 +49,7 @@ export default {
       });
       editor.add({
         name: "knowledge_search",
-        description: "Search current or historical durable knowledge with structured filters and provenance. Use terms for substring discovery when an exact key is unknown.",
+        description: "Search current or historical durable knowledge with structured filters, provenance, and exact completion metadata. Use terms for substring discovery when an exact key is unknown.",
         input: {
           type: "object", additionalProperties: false,
           properties: {

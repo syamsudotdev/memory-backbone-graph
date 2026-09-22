@@ -8,8 +8,8 @@ export type Dataset = "entities" | "episodes" | "facts";
 
 export const COLUMNS: Record<Dataset, readonly string[]> = {
   entities: ["schema_version", "entity_id", "type", "name", "canonical_key", "created_at"],
-  episodes: ["schema_version", "episode_id", "created_at", "agent_id", "session_id", "kind", "summary", "source", "evidence", "tags"],
-  facts: ["schema_version", "fact_id", "subject", "predicate", "object", "episode_id", "created_at", "evidence", "supersedes", "tags", "fingerprint"],
+  episodes: ["schema_version", "episode_id", "created_at", "agent_id", "session_id", "kind", "summary", "source", "evidence"],
+  facts: ["schema_version", "fact_id", "subject", "predicate", "object", "episode_id", "created_at", "evidence", "supersedes", "fingerprint"],
 };
 
 const REQUIRED: Record<Dataset, readonly string[]> = {
@@ -17,7 +17,7 @@ const REQUIRED: Record<Dataset, readonly string[]> = {
   episodes: ["episode_id", "created_at", "agent_id", "session_id", "kind", "summary", "source"],
   facts: ["fact_id", "subject", "predicate", "object", "episode_id", "created_at", "supersedes"],
 };
-const DEFAULTS: Record<string, string> = { schema_version: SCHEMA_VERSION, evidence: "", tags: "", fingerprint: "" };
+const DEFAULTS: Record<string, string> = { schema_version: SCHEMA_VERSION, evidence: "", fingerprint: "" };
 const PREFIX = { entities: "ent_", episodes: "ep_", facts: "fact_" } as const;
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const RFC3339 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
@@ -90,13 +90,13 @@ export function validateRecord(dataset: Dataset, record: CsvRecord): void {
     if (record.canonical_key !== key) throw new Error("canonical_key does not match type and name");
     rejectSecrets([record.type, record.name, record.canonical_key]);
   }
-  if (dataset === "episodes") { validateAgentId(record.agent_id); rejectSecrets([record.session_id, record.kind, record.summary, record.source, record.evidence, record.tags]); }
+  if (dataset === "episodes") { validateAgentId(record.agent_id); validateKind(record.kind); rejectSecrets([record.session_id, record.kind, record.summary, record.source, record.evidence]); }
   if (dataset === "facts") {
-    canonicalKeyParts(record.subject); canonicalKeyParts(record.object); normalized(record.predicate, "predicate");
+    canonicalKeyParts(record.subject); canonicalKeyParts(record.object); validatePredicate(record.predicate);
     if (record.episode_id && !isPrefixedUuid(record.episode_id, "ep_")) throw new Error("invalid episode_id");
     if (record.supersedes && !isPrefixedUuid(record.supersedes, "fact_")) throw new Error("invalid supersedes");
     if (record.fingerprint !== factFingerprint(record.subject, record.predicate, record.object)) throw new Error("invalid fingerprint");
-    rejectSecrets([record.subject, record.predicate, record.object, record.evidence, record.tags]);
+    rejectSecrets([record.subject, record.predicate, record.object, record.evidence]);
   }
 }
 
@@ -111,13 +111,26 @@ function normalized(value: string, label: string): string {
 }
 
 export function canonicalKey(type: string, name: string): string {
-  return `${normalized(type, "entity type")}:${normalized(name, "entity name")}`;
+  const key = `${normalized(type, "entity type")}:${normalized(name, "entity name")}`;
+  canonicalKeyParts(key); return key;
 }
 
 export function canonicalKeyParts(key: string): [string, string] {
   const split = key.indexOf(":");
-  if (split < 1 || split === key.length - 1) throw new Error("canonical key must be <type>:<name>");
+  if (split < 1 || split !== key.lastIndexOf(":") || split === key.length - 1) throw new Error("canonical key must be <type>:<name>");
   return [normalized(key.slice(0, split), "entity type"), normalized(key.slice(split + 1), "entity name")];
+}
+
+export function validateKind(value: string): string {
+  const kind = validateText(value, "kind", { maxBytes: 64 });
+  if (!/^[a-z][a-z0-9_-]*$/.test(kind)) throw new Error("invalid kind");
+  return kind;
+}
+
+export function validatePredicate(value: string): string {
+  const predicate = validateText(value, "predicate", { maxBytes: 128 });
+  if (!/^[a-z][a-z0-9_-]*(?: [a-z][a-z0-9_-]*)*$/.test(predicate)) throw new Error("invalid predicate");
+  return predicate;
 }
 
 export function factFingerprint(subject: string, predicate: string, object: string): string {

@@ -14,7 +14,8 @@ Use project memory when it can change the work. Keep it small and trustworthy. P
 3. Reuse discovered canonical keys in exact `subject` or `object` filters.
 4. Use narrow structured filters when the subject or relation is known.
 5. Use `knowledge_get`, or the adapter's `get` operation, when a result references a fact, episode, or entity that needs exact provenance.
-6. Treat no result as no stored knowledge, not proof that the knowledge is false.
+6. Check `hasMore`; narrow the terms when more matching facts exist and more context is necessary.
+7. Treat no result as no stored knowledge, not proof that the knowledge is false.
 
 Recall is complete when the relevant current facts and their provenance are known, or the search returns no relevant facts.
 

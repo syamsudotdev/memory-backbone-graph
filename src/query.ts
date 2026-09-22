@@ -13,6 +13,7 @@ const exec = promisify(execFile);
 const DATASETS: Dataset[] = ["entities", "episodes", "facts"];
 export type SearchFilters = { terms?: string[]; subject?: string; predicate?: string; object?: string; kind?: string; agent_id?: string; session_id?: string; from?: string; to?: string; limit?: number; history?: boolean };
 export type QueryResult = { rows: Record<string, unknown>[]; partial: boolean; omittedShards: string[] };
+export type SearchResult = QueryResult & { returned: number; total: number; hasMore: boolean };
 export type QueryOptions = { duckdbPath?: string; extensionDir?: string; env?: NodeJS.ProcessEnv };
 type Loaded = { dataset: Dataset; path: string; rows: CsvRecord[] };
 
@@ -73,19 +74,21 @@ function clauses(filters: SearchFilters) {
   for (const key of ["subject", "predicate", "object"] as const) if (filters[key] !== undefined) where.push(`f.${key}=${literal(value(filters[key], key))}`);
   for (const key of ["kind", "agent_id", "session_id"] as const) if (filters[key] !== undefined) where.push(`e.${key}=${literal(value(filters[key], key))}`);
   if (filters.from !== undefined) where.push(`CAST(f.created_at AS TIMESTAMP)>=CAST(${literal(timestamp(filters.from, "from"))} AS TIMESTAMP)`); if (filters.to !== undefined) where.push(`CAST(f.created_at AS TIMESTAMP)<=CAST(${literal(timestamp(filters.to, "to"))} AS TIMESTAMP)`);
-  if (filters.terms !== undefined) { if (!Array.isArray(filters.terms) || filters.terms.length > 20) throw new Error("invalid terms"); for (const term of filters.terms) where.push(`lower(concat_ws(' ',f.subject,f.predicate,f.object,f.evidence,f.tags,e.summary,e.source,e.evidence,e.tags)) LIKE ${likeLiteral(value(term, "term").toLowerCase())} ESCAPE '\\'`); }
+  if (filters.terms !== undefined) { if (!Array.isArray(filters.terms) || filters.terms.length > 20) throw new Error("invalid terms"); for (const term of filters.terms) where.push(`lower(concat_ws(' ',f.subject,f.predicate,f.object,f.evidence,e.summary,e.source,e.evidence)) LIKE ${likeLiteral(value(term, "term").toLowerCase())} ESCAPE '\\'`); }
   const limit = filters.limit ?? 20; if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new Error("limit must be an integer from 1 to 100"); return { where: where.length ? `WHERE ${where.join(" AND ")}` : "", limit };
 }
 async function project(cwd: string) { return (await resolveProjectGit(cwd)).root; }
 /** Terms are ANDed, case-insensitive literal substrings over fact and episode text. */
-export async function searchKnowledge(cwd: string, filters: SearchFilters = {}, options: QueryOptions = {}): Promise<QueryResult> {
+export async function searchKnowledge(cwd: string, filters: SearchFilters = {}, options: QueryOptions = {}): Promise<SearchResult> {
   let filter: ReturnType<typeof clauses>; try { filter = clauses(filters); } catch (error) { throw knowledgeError("validation", error); }
-  const root = await project(cwd), p = await prepare(root, options), relation = filters.history ? "fact_history" : "current_facts", sql = `${p.views}\nSELECT f.*,e.agent_id,e.session_id,e.kind,e.summary,e.source,e.evidence AS episode_evidence,e.tags AS episode_tags FROM ${relation} f LEFT JOIN episodes e USING (episode_id) ${filter.where} ORDER BY f.created_at,f.fact_id LIMIT ${filter.limit};`;
-  return { rows: await run(p.duckdb, sql, p.env), partial: p.omitted.length > 0, omittedShards: p.omitted };
+  const root = await project(cwd), p = await prepare(root, options), relation = filters.history ? "fact_history" : "current_facts", sql = `${p.views}\nSELECT f.*,e.agent_id,e.session_id,e.kind,e.summary,e.source,e.evidence AS episode_evidence,COUNT(*) OVER () AS __total_matches FROM ${relation} f LEFT JOIN episodes e USING (episode_id) ${filter.where} ORDER BY f.created_at,f.fact_id LIMIT ${filter.limit};`;
+  const rows = await run(p.duckdb, sql, p.env), total = rows.length ? Number(rows[0].__total_matches) : 0;
+  for (const row of rows) delete row.__total_matches;
+  return { rows, returned: rows.length, total, hasMore: rows.length < total, partial: p.omitted.length > 0, omittedShards: p.omitted };
 }
 export async function getKnowledge(cwd: string, id: string, options: QueryOptions = {}): Promise<QueryResult> {
   try { value(id, "id"); } catch (error) { throw knowledgeError("validation", error); }
   const kind = id.startsWith("fact_") ? "fact" : id.startsWith("ep_") ? "episode" : id.startsWith("ent_") ? "entity" : undefined, prefix = kind === "fact" ? "fact_" : kind === "episode" ? "ep_" : "ent_"; if (!kind || !isPrefixedUuid(id, prefix)) throw new KnowledgeError("validation", "invalid stable ID");
-  const root = await project(cwd), p = await prepare(root, options), encodedId = literal(id), query = kind === "fact" ? "SELECT f.*,e.agent_id,e.session_id,e.kind,e.summary,e.source,e.evidence AS episode_evidence,e.tags AS episode_tags FROM facts f LEFT JOIN episodes e USING (episode_id) WHERE f.fact_id=" + encodedId + " LIMIT 1" : kind === "episode" ? "SELECT * FROM episodes WHERE episode_id=" + encodedId + " LIMIT 1" : "SELECT * FROM entities WHERE entity_id=" + encodedId + " LIMIT 1";
+  const root = await project(cwd), p = await prepare(root, options), encodedId = literal(id), query = kind === "fact" ? "SELECT f.*,e.agent_id,e.session_id,e.kind,e.summary,e.source,e.evidence AS episode_evidence FROM facts f LEFT JOIN episodes e USING (episode_id) WHERE f.fact_id=" + encodedId + " LIMIT 1" : kind === "episode" ? "SELECT * FROM episodes WHERE episode_id=" + encodedId + " LIMIT 1" : "SELECT * FROM entities WHERE entity_id=" + encodedId + " LIMIT 1";
   return { rows: await run(p.duckdb, p.views + "\n" + query + ";", p.env), partial: p.omitted.length > 0, omittedShards: p.omitted };
 }
